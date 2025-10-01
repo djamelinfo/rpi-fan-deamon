@@ -9,7 +9,7 @@ from src.fanControl import FanController
 class TestFanController(unittest.TestCase):
     def setUp(self):
         # Patch GPIO and PWM for all tests
-        patcher_gpio = patch('fanControl.GPIO')
+        patcher_gpio = patch('src.fanControl.GPIO')
         self.mock_gpio = patcher_gpio.start()
         self.addCleanup(patcher_gpio.stop)
         self.mock_pwm = MagicMock()
@@ -17,7 +17,7 @@ class TestFanController(unittest.TestCase):
         # Create controller instance
         self.controller = FanController()
 
-    @patch('fanControl.FanController.get_cpu_temperature')
+    @patch('src.fanControl.FanController.get_cpu_temperature')
     def test_handle_fan_high_temp(self, mock_temp):
         mock_temp.return_value = 60.0  # Simulate high temperature
         self.controller.handle_fan()
@@ -25,7 +25,7 @@ class TestFanController(unittest.TestCase):
         self.assertGreaterEqual(self.controller.fan_speed, 0)
         self.assertLessEqual(self.controller.fan_speed, 100)
 
-    @patch('fanControl.FanController.get_cpu_temperature')
+    @patch('src.fanControl.FanController.get_cpu_temperature')
     def test_handle_fan_low_temp(self, mock_temp):
         mock_temp.return_value = 30.0  # Simulate low temperature
         self.controller.handle_fan()

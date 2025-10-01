@@ -20,31 +20,35 @@ rpi-fan-deamon is a Python-based daemon for Raspberry Pi that automatically cont
 
 ## Installation
 
-### Prerequisites
-- Raspberry Pi with Raspbian OS
-- Python 3
-- `RPi.GPIO` library
+### Packages for Ubuntu, Raspberry pi OS, and the like
+   ```sh
+   sudo apt-get install git python3 python3-pip RPi.GPIO
+   ```
 
 ### Steps
-1. Clone or copy the repository to your Raspberry Pi:
+1. Get a copy of the repository:
 	```sh
-	git clone https://github.com/yourusername/rpi-fan-deamon.git
+	git clone https://github.com/yourusername/rpi-fan-deamon.git /opt/rpi-fan-deamon
 	```
-2. Install required Python packages:
+2. move into your new local repository:
 	```sh
-	pip3 install RPi.GPIO
+	cd /opt/rpi-fan-deamon
 	```
-3. Copy the files to `/opt/rpi-fan-deamon` (or your preferred directory):
+3. Move to the latest official release::
 	```sh
-	sudo mkdir -p /opt/rpi-fan-deamon
-	sudo cp fanControl.py /opt/rpi-fan-deamon/
-	sudo cp fancontrol.service /etc/systemd/system/
+	sudo git checkout v1.0.0 # (you want to replace v1.8.5 with the latest if this isn't)
 	```
 4. Enable and start the systemd service:
 	```sh
-	sudo systemctl daemon-reload
-	sudo systemctl enable fancontrol
-	sudo systemctl start fancontrol
+	sudo ln -s /opt/rpi-fan-deamon/fancontrol.service /etc/systemd/system/fancontrol.service
+	
+    sudo systemctl daemon-reload
+    
+    # tell system that it can start our script at system startup during boot
+	sudo systemctl enable fancontrol.service
+    
+    # start the script running
+	sudo systemctl start fancontrol.service
 	```
 
 ## Usage

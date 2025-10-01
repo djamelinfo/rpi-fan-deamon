@@ -1,5 +1,9 @@
+import sys
 import unittest
 from unittest.mock import patch, MagicMock
+# Mock RPi.GPIO if not running on a Pi
+sys.modules['RPi'] = MagicMock()
+sys.modules['RPi.GPIO'] = MagicMock()
 from src.fanControl import FanController
 
 class TestFanController(unittest.TestCase):

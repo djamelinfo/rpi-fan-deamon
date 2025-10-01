@@ -10,7 +10,7 @@ import logging
 import sys
 from RPi import GPIO
 
-# pylint: disable=no-member
+# pylint: disable=E1101
 class FanController:
     """Controls a Raspberry Pi fan using PID logic."""
     def __init__(self, fan_pin=17, desired_temp=45, p_temp=15, i_temp=0.4, pwm_freq=50):

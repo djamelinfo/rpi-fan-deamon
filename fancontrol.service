@@ -1,0 +1,18 @@
+[Unit]
+Description=Raspberry Pi Fan Control Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/opt/rpi-fan-deamon
+ExecStart=/usr/bin/python3 /opt/rpi-fan-deamon/fanControl.py
+StandardOutput=null
+StandardError=journal
+Environment=PYTHONUNBUFFERED=1
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

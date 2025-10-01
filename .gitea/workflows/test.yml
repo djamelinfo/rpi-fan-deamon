@@ -4,7 +4,6 @@ on:
   pull_request:
     branches:
       - main
-      - refacto-code-and-add-test
 
 jobs:
   test:

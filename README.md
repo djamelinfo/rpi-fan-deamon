@@ -40,7 +40,7 @@ rpi-fan-deamon is a Python-based daemon for Raspberry Pi that automatically cont
 	```
 4. Enable and start the systemd service:
 	```sh
-	sudo ln -s /opt/rpi-fan-deamon/fancontrol.service /etc/systemd/system/fancontrol.service
+	sudo ln -s /opt/rpi-fan-deamon/systemd/fancontrol.service /etc/systemd/system/fancontrol.service
 	
     sudo systemctl daemon-reload
     

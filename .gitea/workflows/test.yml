@@ -11,18 +11,43 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # ensure history available for merge-base
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install commitlint
+        run: npm i -D @commitlint/{cli,config-conventional}
+
+      - name: Fetch base branch
+        run: |
+          # bring in origin/<base> so we can reference it locally
+          git fetch --no-tags --prune origin \
+            +refs/heads/${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
+
+      - name: Lint commits (Conventional Commits)
+        run: |
+          BASE=$(git merge-base origin/${{ github.base_ref }} HEAD)
+          echo "Linting commits from $BASE to HEAD"
+          npx commitlint --from "$BASE" --to HEAD
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install RPi.GPIO
+
       - name: Install pylint
         run: pip install pylint
+
       - name: Run pylint
         run: pylint src/fanControl.py --fail-under=8
+
       - name: Run unit tests
-        run: |
-          python -m unittest discover tests
+        run: python -m unittest discover tests

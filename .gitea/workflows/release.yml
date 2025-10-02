@@ -13,15 +13,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: https://github.com/actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history
+      - name: Ensure tags are present
+        run: git fetch --force --tags
 
       - name: Set up Git user
         run: |
           git config --global user.name "Gitea Actions"
           git config --global user.email "actions@gitea.local"
 
-      - name: Bump version
-        id: bump_version
+      # Calculate new version and write VERSION (no tag yet)
+      - name: Calculate new version
+        id: version
         shell: bash
         run: |
           set -euo pipefail
@@ -29,28 +34,74 @@ jobs:
           VERSION_FILE="VERSION"
           VERSION=$(cat "$VERSION_FILE")
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-          if [ "$BUMP_TYPE" = "major" ]; then
-            MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0
-          elif [ "$BUMP_TYPE" = "minor" ]; then
-            MINOR=$((MINOR+1)); PATCH=0
-          else
-            PATCH=$((PATCH+1))
-          fi
+          case "$BUMP_TYPE" in
+            major) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR+1)); PATCH=0 ;;
+            *)     PATCH=$((PATCH+1)) ;;
+          esac
           NEW_VERSION="$MAJOR.$MINOR.$PATCH"
           echo "$NEW_VERSION" > "$VERSION_FILE"
-          git add "$VERSION_FILE"
-          git commit -m "Bump version to v$NEW_VERSION"
-          git tag "v$NEW_VERSION"
-          git push origin "v$NEW_VERSION"
-          git push origin HEAD
           echo "NEW_VERSION=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+
+      # Commit the version bump and tag it
+      - name: Commit bump and tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          NEW="${{ steps.version.outputs.NEW_VERSION }}"
+          git add VERSION
+          git commit -m "chore(release): v$NEW" || echo "Nothing to commit"
+          git tag "v$NEW"
+          # Push tag now so the release can reference it
+          git push origin "v$NEW"
+          git push origin HEAD
+
+      # Set up Node so we can run conventional-changelog
+      - name: Set up Node.js
+        uses: https://github.com/actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Generate/refresh CHANGELOG.md using Conventional Commits
+      - name: Generate CHANGELOG.md
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Prepend latest release notes to CHANGELOG.md in-place
+          npx --yes conventional-changelog-cli \
+            -p conventionalcommits \
+            --tag-prefix "v" \
+            -i CHANGELOG.md -s
+
+          git add CHANGELOG.md
+          git commit -m "docs(changelog): update for v${{ steps.version.outputs.NEW_VERSION }}" || echo "No changelog changes"
+          git push origin HEAD
+
+      # Extract just the latest section as release body
+      - name: Build release notes (latest)
+        id: notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          NEW="${{ steps.version.outputs.NEW_VERSION }}"
+          # Get only the latest release notes
+          NOTES="$(npx --yes conventional-changelog-cli -p conventionalcommits --tag-prefix 'v' -r 1)"
+          # Optionally hide the release commit line, if present:
+          NOTES="$(printf "%s" "$NOTES" | sed "/chore(release): v${NEW}/d")"
+          {
+            echo "notes<<EOF"
+            echo "$NOTES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create Gitea release
         uses: https://github.com/akkuman/gitea-release-action@v1
         with:
-          token: ${{ secrets.RELEASE_TOKEN }}                 # PAT from your Gitea
-          server_url: ${{ gitea.server_url }}                # e.g. https://gitea.example.com
-          repository: ${{ gitea.repository }}                # owner/repo
-          tag_name: v${{ steps.bump_version.outputs.NEW_VERSION }}
-          name: "Release v${{ steps.bump_version.outputs.NEW_VERSION }}"
-          body: "Automated release for v${{ steps.bump_version.outputs.NEW_VERSION }}."
+          token: ${{ secrets.RELEASE_TOKEN }}
+          server_url: ${{ gitea.server_url }}
+          repository: ${{ gitea.repository }}
+          tag_name: v${{ steps.version.outputs.NEW_VERSION }}
+          name: "Release v${{ steps.version.outputs.NEW_VERSION }}"
+          body: ${{ steps.notes.outputs.notes }}
+          # files: |
+          #   CHANGELOG.md

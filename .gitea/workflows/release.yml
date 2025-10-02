@@ -16,7 +16,6 @@ jobs:
         uses: https://github.com/actions/checkout@v4
         with:
           fetch-depth: 0   # full history
-          token: ${{ secrets.RELEASE_TOKEN }}  # user has push rights to main
       - name: Ensure tags are present
         run: git fetch --force --tags
 

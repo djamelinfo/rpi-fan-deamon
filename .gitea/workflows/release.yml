@@ -15,7 +15,8 @@ jobs:
       - name: Checkout code
         uses: https://github.com/actions/checkout@v4
         with:
-          fetch-depth: 0   # full history
+          fetch-depth: 0
+
       - name: Ensure tags are present
         run: git fetch --force --tags
 
@@ -24,7 +25,7 @@ jobs:
           git config --global user.name "Gitea Actions"
           git config --global user.email "actions@gitea.local"
 
-      # Calculate new version and write VERSION (no tag yet)
+      # 1) Compute new version (from VERSION file)
       - name: Calculate new version
         id: version
         shell: bash
@@ -43,50 +44,37 @@ jobs:
           echo "$NEW_VERSION" > "$VERSION_FILE"
           echo "NEW_VERSION=$NEW_VERSION" >> "$GITHUB_OUTPUT"
 
-      # Commit the version bump and tag it
-      - name: Commit bump and tag
-        shell: bash
-        run: |
-          set -euo pipefail
-          NEW="${{ steps.version.outputs.NEW_VERSION }}"
-          git add VERSION
-          git commit -m "chore(release): v$NEW" || echo "Nothing to commit"
-          git tag "v$NEW"
-          # Push tag now so the release can reference it
-          git push origin "v$NEW"
-          git push origin HEAD
-
-      # Set up Node so we can run conventional-changelog
-      - name: Set up Node.js
-        uses: https://github.com/actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      # Generate/refresh CHANGELOG.md using Conventional Commits
+      # 2) Generate CHANGELOG for "unreleased" range and include the version in the heading
       - name: Generate CHANGELOG.md
         shell: bash
         run: |
           set -euo pipefail
-          # Prepend latest release notes to CHANGELOG.md in-place
+          NEW="${{ steps.version.outputs.NEW_VERSION }}"
+
+          # Provide a version to conventional-changelog (repo might not have package.json)
+          printf '{\n  "version": "%s"\n}\n' "$NEW" > package.json
+
+          # Prepend latest notes in-place
           npx --yes conventional-changelog-cli \
             -p conventionalcommits \
             --tag-prefix "v" \
             -i CHANGELOG.md -s
 
-          git add CHANGELOG.md
-          git commit -m "docs(changelog): update for v${{ steps.version.outputs.NEW_VERSION }}" || echo "No changelog changes"
+          rm -f package.json
+
+          git add VERSION CHANGELOG.md
+          git commit -m "docs(changelog): update for v$NEW" || echo "No changelog changes"
           git push origin HEAD
 
-      # Extract just the latest section as release body
+      # 3) Build release notes for just the latest section (unreleased == upcoming tag)
       - name: Build release notes (latest)
         id: notes
         shell: bash
         run: |
           set -euo pipefail
           NEW="${{ steps.version.outputs.NEW_VERSION }}"
-          # Get only the latest release notes
           NOTES="$(npx --yes conventional-changelog-cli -p conventionalcommits --tag-prefix 'v' -r 1)"
-          # Optionally hide the release commit line, if present:
+          # Hide the bump/chore line if present
           NOTES="$(printf "%s" "$NOTES" | sed "/chore(release): v${NEW}/d")"
           {
             echo "notes<<EOF"
@@ -94,6 +82,16 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
+      # 4) Tag and push (after changelog + notes are ready)
+      - name: Tag and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          NEW="${{ steps.version.outputs.NEW_VERSION }}"
+          git tag "v$NEW"
+          git push origin "v$NEW"
+
+      # 5) Create Gitea release
       - name: Create Gitea release
         uses: https://github.com/akkuman/gitea-release-action@v1
         with:

@@ -4,9 +4,9 @@ After=network.target
 
 [Service]
 Type=simple
-User=pi
-Group=pi
-WorkingDirectory=/opt/rpi-fan-deamon/src
+User=root
+Group=root
+WorkingDirectory=/home/pi
 ExecStart=/usr/bin/python3 /opt/rpi-fan-deamon/src/fanControl.py
 StandardOutput=null
 StandardError=journal

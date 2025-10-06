@@ -28,7 +28,7 @@ rpi-fan-deamon is a Python-based daemon for Raspberry Pi that automatically cont
 ### Steps
 1. Get a copy of the repository:
 	```sh
-	git clone https://github.com/yourusername/rpi-fan-deamon.git /opt/rpi-fan-deamon
+	git clone https://gitea.yagoubi.work/djamel/rpi-fan-deamon.git /opt/rpi-fan-deamon
 	```
 2. move into your new local repository:
 	```sh

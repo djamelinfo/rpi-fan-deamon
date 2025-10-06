@@ -1,5 +1,12 @@
 # rpi-fan-deamon
 
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/djamelinfo/rpi-fan-deamon)](https://github.com/djamelinfo/rpi-fan-deamon/releases)
+[![View Changelog](https://img.shields.io/badge/changelog-view-blue)](CHANGELOG.md)
+![GitHub top language](https://img.shields.io/github/languages/top/djamelinfo/rpi-fan-deamon)
+![GitHub language count](https://img.shields.io/github/languages/count/djamelinfo/rpi-fan-deamon)
+![GitHub repo size](https://img.shields.io/github/repo-size/djamelinfo/rpi-fan-deamon)
+
+
 ## Introduction
 rpi-fan-deamon is a Python-based daemon for Raspberry Pi that automatically controls a cooling fan based on CPU temperature. It helps maintain optimal operating conditions and prolongs hardware lifespan by adjusting fan speed dynamically.
 

@@ -51,6 +51,23 @@ rpi-fan-deamon is a Python-based daemon for Raspberry Pi that automatically cont
 	sudo systemctl start fancontrol.service
 	```
 
+
+## How It Works
+
+This project is inspired by the approach described in [Variable Speed Cooling Fan for Raspberry Pi Using PWM](https://www.sensorsiot.org/variable-speed-cooling-fan-for-raspberry-pi-using-pwm-video138/). The script uses PWM (Pulse Width Modulation) to control the speed of a connected fan, allowing for variable cooling based on the CPU temperature.
+
+- **PWM Control:** The Raspberry Pi’s GPIO pin outputs a PWM signal to the fan, adjusting its speed smoothly rather than just turning it on or off.
+- **Temperature Monitoring:** The script reads the CPU temperature using the `vcgencmd measure_temp` command.
+- **PID Logic:** The fan speed is calculated using a simple PID (Proportional-Integral-Derivative) algorithm, which helps maintain a stable temperature and prevents rapid fan speed changes.
+- **Automatic Operation:** When the CPU temperature exceeds a set threshold, the fan speed increases. As the temperature drops, the fan slows down or turns off, reducing noise and power consumption.
+- **Systemd Integration:** The script runs as a background service, ensuring the fan control starts automatically on boot and runs reliably.
+
+### Hardware Setup
+
+- Connect a 5V PWM-capable fan to the Raspberry Pi’s GPIO pin (default is GPIO 17).
+- Make sure the fan’s ground and power are connected appropriately.
+- No additional hardware is required if your fan supports PWM directly; otherwise, you may need a transistor or MOSFET to drive the fan.
+
 ## Usage
 The daemon will automatically start on boot and control the fan based on CPU temperature. You can check the status with:
 ```sh

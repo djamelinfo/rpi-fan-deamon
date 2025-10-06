@@ -1,3 +1,4 @@
+## [1.0.7](http://192.168.0.50:3000/djamel/rpi-fan-deamon/compare/v1.0.6...v1.0.7) (2025-10-06)
 ## [1.0.6](http://192.168.0.50:3000/djamel/rpi-fan-deamon/compare/v1.0.5...v1.0.6) (2025-10-06)
 
 ### Bug Fixes
